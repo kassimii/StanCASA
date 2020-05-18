@@ -9,7 +9,11 @@ import android.icu.util.Output;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -18,16 +22,20 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.InputMismatchException;
 import java.util.UUID;
 
 public class MainScreenActivity extends AppCompatActivity {
 
     SeekBar brightness;
+    Button btn;
+    TextView tv;
     String address = null;
     private ProgressDialog progress;
     BluetoothAdapter myBluetooth = null;
     BluetoothSocket btSocket = null;
     private boolean isBtConnected = false;
+    private int progressBar = 0;
     //SPP UUID. Look for it
     static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
@@ -43,6 +51,8 @@ public class MainScreenActivity extends AppCompatActivity {
 
         brightness = (SeekBar)findViewById(R.id.lightSeekBar);
 
+        tv = (TextView)findViewById(R.id.DisplayAmountOfLight);
+
         new ConnectBT().execute(); //Call the class to connect
 
         brightness.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -50,27 +60,28 @@ public class MainScreenActivity extends AppCompatActivity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser==true)
                 {
-                    try
-                    {
-                        btSocket.getOutputStream().write(String.valueOf(progress).getBytes());
-                    }
-                    catch (IOException e)
-                    {
-
-                    }
+                    progressBar = progress;
+                    tv.setText(Integer.toString(progress) + " %");
                 }
             }
 
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
+            public void onStartTrackingTouch(SeekBar seekBar) { }
 
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
+            public void onStopTrackingTouch(SeekBar seekBar) { }
+        });
 
+        btn = (Button)findViewById(R.id.setLightButton);
+
+        btn.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                new CommunicateBT().execute();
             }
         });
+
     }
 
     private void Disconnect()
@@ -112,11 +123,11 @@ public class MainScreenActivity extends AppCompatActivity {
                     btSocket.connect();//start connection
 
                     // cod de trimis ceva prin bt
-                    String s = "abcdef";
-                    byte[] s2 = s.getBytes("us-ascii");
-                    OutputStream os = btSocket.getOutputStream();
-                    DataOutputStream dos = new DataOutputStream(os);
-                    os.write(s2);
+//                    String s = "abcdef";
+//                    byte[] s2 = s.getBytes("us-ascii");
+//                    OutputStream os = btSocket.getOutputStream();
+//                    DataOutputStream dos = new DataOutputStream(os);
+//                    os.write(s2);
 
                     // cod de primit ceva..
 //                    byte[] ans = new byte[1];
@@ -148,5 +159,40 @@ public class MainScreenActivity extends AppCompatActivity {
             progress.dismiss();
         }
     }
+
+    private class CommunicateBT extends AsyncTask<Void, Void, Void>  // UI thread
+    {
+
+        @Override
+        protected void onPreExecute()
+        { }
+
+        @Override
+        protected Void doInBackground(Void... devices) //while the progress dialog is shown, the connection is done in background
+        {
+
+            try {
+                byte x = (byte) (progressBar & 0xff);
+                btSocket.getOutputStream().write(x);
+
+//                InputStream is = btSocket.getInputStream();
+//                if (is.available() > 0) {
+//                    byte[] b = new byte[1];
+//                    is.read(b);
+//                    Log.i("inputBT", b.toString());
+//                    // poti pune debugger break aci
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+            return null;
+        }
+        @Override
+        protected void onPostExecute(Void result) //after the doInBackground, it checks if everything went fine
+        {
+            super.onPostExecute(result);
+        }
+    }
+
 }
+
 

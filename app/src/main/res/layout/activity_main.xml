@@ -29,7 +29,7 @@
     <Space
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="15" />
+        android:layout_weight="10" />
 
     <TextView
         android:id="@+id/textView"
@@ -77,7 +77,7 @@
     <Space
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="15" />
+        android:layout_weight="5" />
 
     <Button
         android:id="@+id/setLightButton"
@@ -91,5 +91,33 @@
         android:padding="10dp"
         android:textColor="#FFFFFF"
         android:background="@drawable/set_lights_button" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="5" />
+
+    <Button
+        android:id="@+id/fetchDataButton"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="12"
+        android:layout_gravity="center_horizontal"
+
+        android:text="Fetch Data"
+        android:textSize="36sp"
+        android:padding="10dp"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/set_lights_button" />
+
+    <TextView
+        android:id="@+id/dataFetched"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="8"
+
+        android:gravity="center_horizontal"
+        android:text="*nothing received*"
+        android:textSize="20sp" />
 
 </LinearLayout>

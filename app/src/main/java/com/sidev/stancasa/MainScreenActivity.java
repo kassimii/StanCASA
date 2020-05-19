@@ -28,7 +28,7 @@ import java.util.UUID;
 public class MainScreenActivity extends AppCompatActivity {
 
     SeekBar brightness;
-    Button btn;
+    Button btn, btn2;
     TextView tv;
     String address = null;
     private ProgressDialog progress;
@@ -78,7 +78,17 @@ public class MainScreenActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
-                new CommunicateBT().execute();
+                new CommunicateBT().execute(1); // mobile -> Arduino
+            }
+        });
+
+        btn2 = (Button)findViewById(R.id.fetchDataButton);
+
+        btn.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                new CommunicateBT().execute(-1); // Arduino -> mobile
             }
         });
 
@@ -160,7 +170,7 @@ public class MainScreenActivity extends AppCompatActivity {
         }
     }
 
-    private class CommunicateBT extends AsyncTask<Void, Void, Void>  // UI thread
+    private class CommunicateBT extends AsyncTask<Integer, Void, Void>  // UI thread
     {
 
         @Override
@@ -168,24 +178,37 @@ public class MainScreenActivity extends AppCompatActivity {
         { }
 
         @Override
-        protected Void doInBackground(Void... devices) //while the progress dialog is shown, the connection is done in background
+        protected Void doInBackground(Integer... devices) //while the progress dialog is shown, the connection is done in background
         {
+            int BTway = devices[0];
 
-            try {
-                byte x = (byte) (progressBar & 0xff);
-                btSocket.getOutputStream().write(x);
+            if (BTway == 1) {
+                try {
 
-//                InputStream is = btSocket.getInputStream();
-//                if (is.available() > 0) {
-//                    byte[] b = new byte[1];
-//                    is.read(b);
-//                    Log.i("inputBT", b.toString());
-//                    // poti pune debugger break aci
-            } catch (IOException ex) {
-                ex.printStackTrace();
+                    byte x = (byte) (progressBar & 0xff);
+                    btSocket.getOutputStream().write(x);
+
+                } catch (IOException ex) { ex.printStackTrace(); }
+
+            } else if (BTway == -1) {
+                InputStream is = null;
+                try {
+                    is = btSocket.getInputStream();
+                    DataInputStream dis = new DataInputStream(is);
+
+                    if (is.available() > 0) {
+                        byte[] b = new byte[1];
+                        dis.readFully(b);
+                        Log.i("inputBT", b.toString());
+                        // poti pune debugger break aci
+                    }
+
+                } catch (IOException e) { e.printStackTrace(); }
             }
+
             return null;
         }
+
         @Override
         protected void onPostExecute(Void result) //after the doInBackground, it checks if everything went fine
         {

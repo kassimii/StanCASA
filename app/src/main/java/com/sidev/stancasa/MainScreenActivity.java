@@ -29,7 +29,7 @@ public class MainScreenActivity extends AppCompatActivity {
 
     SeekBar brightness;
     Button btn, btn2;
-    TextView tv;
+    TextView tv, tv2;
     String address = null;
     private ProgressDialog progress;
     BluetoothAdapter myBluetooth = null;
@@ -52,6 +52,7 @@ public class MainScreenActivity extends AppCompatActivity {
         brightness = (SeekBar)findViewById(R.id.lightSeekBar);
 
         tv = (TextView)findViewById(R.id.DisplayAmountOfLight);
+        tv = (TextView)findViewById(R.id.dataFetched);
 
         new ConnectBT().execute(); //Call the class to connect
 
@@ -170,7 +171,7 @@ public class MainScreenActivity extends AppCompatActivity {
         }
     }
 
-    private class CommunicateBT extends AsyncTask<Integer, Void, Void>  // UI thread
+    private class CommunicateBT extends AsyncTask<Integer, Void, String>  // UI thread
     {
 
         @Override
@@ -178,9 +179,10 @@ public class MainScreenActivity extends AppCompatActivity {
         { }
 
         @Override
-        protected Void doInBackground(Integer... devices) //while the progress dialog is shown, the connection is done in background
+        protected String doInBackground(Integer... devices) //while the progress dialog is shown, the connection is done in background
         {
             int BTway = devices[0];
+            String s = null;
 
             if (BTway == 1) {
                 try {
@@ -199,6 +201,7 @@ public class MainScreenActivity extends AppCompatActivity {
                     if (is.available() > 0) {
                         byte[] b = new byte[1];
                         dis.readFully(b);
+                        s = b.toString();
                         Log.i("inputBT", b.toString());
                         // poti pune debugger break aci
                     }
@@ -206,13 +209,16 @@ public class MainScreenActivity extends AppCompatActivity {
                 } catch (IOException e) { e.printStackTrace(); }
             }
 
-            return null;
+            return s;
         }
 
         @Override
-        protected void onPostExecute(Void result) //after the doInBackground, it checks if everything went fine
+        protected void onPostExecute(String result) //after the doInBackground, it checks if everything went fine
         {
             super.onPostExecute(result);
+
+            if (result != null)
+                tv2.setText("Received" + result);
         }
     }
 

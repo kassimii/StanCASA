@@ -12,6 +12,8 @@ import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -22,6 +24,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.InputMismatchException;
 import java.util.UUID;
 
@@ -39,6 +42,8 @@ public class MainScreenActivity extends AppCompatActivity {
     //SPP UUID. Look for it
     static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
+    CheckBox cb = null;
+    private boolean boxIsChecked = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,9 +57,20 @@ public class MainScreenActivity extends AppCompatActivity {
         brightness = (SeekBar)findViewById(R.id.lightSeekBar);
 
         tv = (TextView)findViewById(R.id.DisplayAmountOfLight);
-        tv = (TextView)findViewById(R.id.dataFetched);
+        tv2 = (TextView)findViewById(R.id.dataFetched);
+
+        cb = (CheckBox)findViewById(R.id.checkBox);
 
         new ConnectBT().execute(); //Call the class to connect
+
+        cb.setOnCheckedChangeListener(new CheckBox.OnCheckedChangeListener() {
+
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                boxIsChecked = isChecked;
+            }
+
+        });
 
         brightness.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -75,6 +91,8 @@ public class MainScreenActivity extends AppCompatActivity {
 
         btn = (Button)findViewById(R.id.setLightButton);
 
+        // TODO: use just one CommunicateBT()
+
         btn.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -83,15 +101,15 @@ public class MainScreenActivity extends AppCompatActivity {
             }
         });
 
-        btn2 = (Button)findViewById(R.id.fetchDataButton);
-
-        btn.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                new CommunicateBT().execute(-1); // Arduino -> mobile
-            }
-        });
+//        btn2 = (Button)findViewById(R.id.fetchDataButton);
+//
+//        btn2.setOnClickListener(new View.OnClickListener() {
+//
+//            @Override
+//            public void onClick(View v) {
+//                new CommunicateBT().execute(-1); // Arduino -> mobile
+//            }
+//        });
 
     }
 
@@ -110,7 +128,7 @@ public class MainScreenActivity extends AppCompatActivity {
 
     }
 
-    private class ConnectBT extends AsyncTask<Void, Void, Void>  // UI thread
+    private class ConnectBT extends AsyncTask<Void, Void, Void>
     {
         private boolean ConnectSuccess = true; //if it's here, it's almost connected
 
@@ -132,20 +150,6 @@ public class MainScreenActivity extends AppCompatActivity {
                     btSocket = dispositivo.createInsecureRfcommSocketToServiceRecord(myUUID);//create a RFCOMM (SPP) connection
                     BluetoothAdapter.getDefaultAdapter().cancelDiscovery();
                     btSocket.connect();//start connection
-
-                    // cod de trimis ceva prin bt
-//                    String s = "abcdef";
-//                    byte[] s2 = s.getBytes("us-ascii");
-//                    OutputStream os = btSocket.getOutputStream();
-//                    DataOutputStream dos = new DataOutputStream(os);
-//                    os.write(s2);
-
-                    // cod de primit ceva..
-//                    byte[] ans = new byte[1];
-//                    InputStream is = btSocket.getInputStream();
-//                    DataInputStream dis = new DataInputStream(is);
-//                    dis.readFully(ans);
-//                    System.out.println("daf");
                 }
             }
             catch (IOException e)
@@ -179,34 +183,28 @@ public class MainScreenActivity extends AppCompatActivity {
         { }
 
         @Override
-        protected String doInBackground(Integer... devices) //while the progress dialog is shown, the connection is done in background
+        protected String doInBackground(Integer... way) //while the progress dialog is shown, the connection is done in background
         {
-            int BTway = devices[0];
+            int BTway = way[0];
             String s = null;
 
-            if (BTway == 1) {
+            if (BTway == 1) { // mobile -> Arduino
                 try {
 
-                    byte x = (byte) (progressBar & 0xff);
-                    btSocket.getOutputStream().write(x);
+                    byte[] x = new byte[3];
+                    x[0] = (byte) 0xc8;
+                    x[1] = (byte) (progressBar & 0xff);
+                    x[2] = boxIsChecked ? (byte) 0x01 : (byte) 0x00;
+                    OutputStream os = btSocket.getOutputStream();
+                    os.write(x);
+//                    os.close();
 
                 } catch (IOException ex) { ex.printStackTrace(); }
 
-            } else if (BTway == -1) {
-                InputStream is = null;
-                try {
-                    is = btSocket.getInputStream();
-                    DataInputStream dis = new DataInputStream(is);
-
-                    if (is.available() > 0) {
-                        byte[] b = new byte[1];
-                        dis.readFully(b);
-                        s = b.toString();
-                        Log.i("inputBT", b.toString());
-                        // poti pune debugger break aci
-                    }
-
-                } catch (IOException e) { e.printStackTrace(); }
+            } else if (BTway == -1) { // Arduino -> mobile
+//                try {
+//
+//                } catch (IOException e) { e.printStackTrace(); }
             }
 
             return s;
@@ -215,10 +213,15 @@ public class MainScreenActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String result) //after the doInBackground, it checks if everything went fine
         {
-            super.onPostExecute(result);
+            if (result == null) {
+            Log.i("received_result", "null");
+            return;
+        }
 
-            if (result != null)
-                tv2.setText("Received" + result);
+            Log.i("received_result", result);
+            String s = "Received" + result;
+            tv2.setText(s);
+
         }
     }
 

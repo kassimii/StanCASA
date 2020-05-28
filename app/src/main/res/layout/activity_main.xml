@@ -74,10 +74,19 @@
         android:text="0%"
         android:textSize="36sp" />
 
+    <CheckBox
+        android:id="@+id/checkBox"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="5"
+        android:layout_marginLeft="50dp"
+        android:layout_gravity="center_horizontal"
+        android:text="Enable curtains" />
+
     <Space
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="5" />
+        android:layout_weight="2" />
 
     <Button
         android:id="@+id/setLightButton"
@@ -95,7 +104,7 @@
     <Space
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="5" />
+        android:layout_weight="3" />
 
     <Button
         android:id="@+id/fetchDataButton"
